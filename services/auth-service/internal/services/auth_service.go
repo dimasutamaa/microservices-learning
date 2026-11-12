@@ -5,7 +5,7 @@ import (
 	"auth-service/internal/dto"
 	"auth-service/internal/models"
 	"auth-service/internal/repositories"
-	"auth-service/utils"
+	"auth-service/internal/utils"
 	"context"
 	"errors"
 	"time"

@@ -7,7 +7,7 @@ import (
 	"auth-service/internal/repositories"
 	"auth-service/internal/routes"
 	"auth-service/internal/services"
-	"auth-service/utils"
+	"auth-service/internal/utils"
 	"context"
 	"fmt"
 	"log"
