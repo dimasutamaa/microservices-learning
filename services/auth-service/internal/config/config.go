@@ -1,7 +1,7 @@
 package config
 
 import (
-	"auth-service/utils"
+	"auth-service/internal/utils"
 	"fmt"
 	"log"
 	"time"
