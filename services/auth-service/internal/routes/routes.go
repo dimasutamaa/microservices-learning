@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRouter(router *gin.Engine, authHandler *handlers.AuthHandler, tokenHandler *handlers.TokenHandler) {
+func SetupRouter(router *gin.Engine, authHandler *handlers.AuthHandler, tokenHandler *handlers.TokenHandler, userHandler *handlers.UserHandler) {
 	api := router.Group("/auth")
 	{
 		api.POST("/register", authHandler.Register)
@@ -14,5 +14,7 @@ func SetupRouter(router *gin.Engine, authHandler *handlers.AuthHandler, tokenHan
 		api.POST("/logout", authHandler.Logout)
 
 		api.GET("/token/:tokenID/usability", tokenHandler.CheckTokenUsability)
+
+		api.GET("/user/:id", userHandler.FindUserByID)
 	}
 }
