@@ -3,7 +3,6 @@ package config
 import (
 	"auth-service/internal/utils"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -28,13 +27,8 @@ type RedisConfig struct {
 }
 
 func LoadGlobalConfig() *GlobalConfig {
-	secret := utils.GetEnv("JWT_SECRET", "")
-	if secret == "" {
-		log.Fatal("JWT_SECRET environment variable is required")
-	}
-
 	return &GlobalConfig{
-		JWTSecret: []byte(secret),
+		JWTSecret: []byte(utils.GetEnvOrFatal("JWT_SECRET")),
 		TokenTTL:  15 * time.Minute,
 	}
 }

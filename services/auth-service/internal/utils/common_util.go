@@ -12,3 +12,11 @@ func GetEnv(key string, defaultVal string) string {
 	log.Printf("Environment variable for %s not found, use default value", key)
 	return defaultVal
 }
+
+func GetEnvOrFatal(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Environment variable %s is required but missing", key)
+	}
+	return value
+}

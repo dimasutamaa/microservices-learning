@@ -27,22 +27,3 @@ func GenerateToken(at *models.AccessToken, secret []byte, ttl time.Duration) (st
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(secret)
 }
-
-func ParseToken(token string, secret []byte) (*Claims, error) {
-	parsedToken, err := jwt.ParseWithClaims(
-		token, &Claims{},
-		func(t *jwt.Token) (any, error) { return secret, nil },
-		jwt.WithValidMethods([]string{"HS256"}),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	claims, ok := parsedToken.Claims.(*Claims)
-	if !ok || !parsedToken.Valid {
-		return nil, jwt.ErrTokenInvalidClaims
-	}
-
-	return claims, nil
-}
