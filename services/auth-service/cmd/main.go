@@ -40,13 +40,13 @@ func main() {
 
 	userRepo := repositories.NewUserRepository(db)
 	tokenRepo := repositories.NewAccessTokenRepository(db)
-	userSvc := services.NewUserService(userRepo, tokenRepo, rdb, cfg)
+	authSvc := services.NewAuthService(userRepo, tokenRepo, rdb, cfg)
 	tokenScv := services.NewAccessTokenService(tokenRepo)
-	userHandler := handlers.NewUserHandler(userSvc)
+	authHandler := handlers.NewAuthHandler(authSvc)
 	tokenHandler := handlers.NewTokenHandler(tokenScv)
 
 	router := gin.Default()
-	routes.SetupRouter(router, userHandler, tokenHandler)
+	routes.SetupRouter(router, authHandler, tokenHandler)
 
 	addr := utils.GetEnv("PORT", "8081")
 	if err := router.Run(":" + addr); err != nil {

@@ -23,7 +23,7 @@ type AuthService struct {
 	cfg       *config.GlobalConfig
 }
 
-func NewUserService(userRepo *repositories.UserRepository, tokenRepo *repositories.AccessTokenRepository,
+func NewAuthService(userRepo *repositories.UserRepository, tokenRepo *repositories.AccessTokenRepository,
 	rdb *redis.Client, cfg *config.GlobalConfig) *AuthService {
 	return &AuthService{
 		userRepo:  userRepo,
