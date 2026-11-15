@@ -1,19 +1,60 @@
 package main
 
 import (
-	"net/http"
+	"fmt"
+	"log"
+	"wallet-service/internal/client"
+	"wallet-service/internal/config"
+	"wallet-service/internal/handlers"
+	"wallet-service/internal/models"
+	"wallet-service/internal/repositories"
+	"wallet-service/internal/routes"
+	"wallet-service/internal/services"
+	"wallet-service/internal/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found - using environment variables")
+	}
+
+	db, err := initDatabase()
+	if err != nil {
+		log.Fatalf("[Database] %v", err)
+	}
+
+	userClient := client.NewUserClient(utils.GetEnvOrFatal("AUTH_SERVICE_BASE_URL"))
+
+	walletRepo := repositories.NewWalletRepository(db)
+	walletSvc := services.NewWalletService(walletRepo, userClient)
+	walletHandler := handlers.NewWalletHandler(walletSvc)
+
 	router := gin.Default()
+	routes.SetupRouter(router, walletHandler)
 
-	router.GET("/wallets/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"services": "wallet-service",
-		})
-	})
+	addr := utils.GetEnv("PORT", "8082")
+	if err := router.Run(":" + addr); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
+}
 
-	router.Run(":8082")
+func initDatabase() (*gorm.DB, error) {
+	dbConfig := config.LoadDBConfig()
+
+	db, err := gorm.Open(postgres.Open(dbConfig.DSN()), &gorm.Config{TranslateError: true})
+	if err != nil {
+		return nil, fmt.Errorf("Failed to connect to PostgreSQL: %w", err)
+	}
+
+	if err := db.AutoMigrate(&models.Wallet{}); err != nil {
+		return nil, fmt.Errorf("Failed to migrate database: %w", err)
+	}
+
+	log.Println("Connected to PostgreSQL")
+	return db, nil
 }
