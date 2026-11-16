@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auth-service/internal/client"
 	"auth-service/internal/config"
 	"auth-service/internal/handlers"
 	"auth-service/internal/models"
@@ -38,10 +39,12 @@ func main() {
 	}
 	defer rdb.Close()
 
+	walletClient := client.NewWalletClient(cfg.WalletSvcBaseUrl)
+
 	userRepo := repositories.NewUserRepository(db)
 	tokenRepo := repositories.NewAccessTokenRepository(db)
 
-	authSvc := services.NewAuthService(userRepo, tokenRepo, rdb, cfg)
+	authSvc := services.NewAuthService(userRepo, tokenRepo, rdb, cfg, walletClient, db)
 	tokenScv := services.NewAccessTokenService(tokenRepo)
 	userSvc := services.NewUserService(userRepo)
 

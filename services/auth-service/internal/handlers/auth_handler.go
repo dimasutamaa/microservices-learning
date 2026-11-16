@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"auth-service/internal/client"
 	"auth-service/internal/dto"
 	"auth-service/internal/services"
 	"errors"
@@ -28,13 +29,23 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	authService, err := h.authService.Register(&request)
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+		switch {
+		case errors.Is(err, client.ErrWalletServiceUnavailable):
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
+			return
+
+		case errors.Is(err, client.ErrWalletService):
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+
+		case errors.Is(err, gorm.ErrDuplicatedKey):
 			c.JSON(http.StatusConflict, gin.H{"error": "User with this email already exists"})
 			return
-		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error occured"})
-		return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error occured"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusCreated, authService)
