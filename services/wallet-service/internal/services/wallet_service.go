@@ -1,7 +1,6 @@
 package services
 
 import (
-	"wallet-service/internal/client"
 	"wallet-service/internal/dto"
 	"wallet-service/internal/models"
 	"wallet-service/internal/repositories"
@@ -11,18 +10,13 @@ import (
 
 type WalletService struct {
 	walletRepo *repositories.WalletRepository
-	userClient *client.UserClient
 }
 
-func NewWalletService(walletRepo *repositories.WalletRepository, userClient *client.UserClient) *WalletService {
-	return &WalletService{walletRepo: walletRepo, userClient: userClient}
+func NewWalletService(walletRepo *repositories.WalletRepository) *WalletService {
+	return &WalletService{walletRepo: walletRepo}
 }
 
 func (s *WalletService) CreateWallet(userID string) (*dto.WalletResponse, error) {
-	if _, err := s.userClient.FindUserByID(userID); err != nil {
-		return nil, err
-	}
-
 	wallet := &models.Wallet{
 		ID:     uuid.NewString(),
 		UserID: userID,

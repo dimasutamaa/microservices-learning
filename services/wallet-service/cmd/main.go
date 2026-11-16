@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"wallet-service/internal/client"
 	"wallet-service/internal/config"
 	"wallet-service/internal/handlers"
 	"wallet-service/internal/models"
@@ -28,10 +27,8 @@ func main() {
 		log.Fatalf("[Database] %v", err)
 	}
 
-	userClient := client.NewUserClient(utils.GetEnvOrFatal("AUTH_SERVICE_BASE_URL"))
-
 	walletRepo := repositories.NewWalletRepository(db)
-	walletSvc := services.NewWalletService(walletRepo, userClient)
+	walletSvc := services.NewWalletService(walletRepo)
 	walletHandler := handlers.NewWalletHandler(walletSvc)
 
 	router := gin.Default()

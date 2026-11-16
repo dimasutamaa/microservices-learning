@@ -3,7 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"wallet-service/internal/client"
+	"wallet-service/internal/dto"
 	"wallet-service/internal/services"
 
 	"github.com/gin-gonic/gin"
@@ -20,35 +20,21 @@ func NewWalletHandler(walletService *services.WalletService) *WalletHandler {
 
 // POST /wallet/create
 func (h *WalletHandler) CreateWallet(c *gin.Context) {
-	userID := c.Request.Header.Get("X-User-ID")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required header: X-User-ID"})
+	var request dto.WalletRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	wallet, err := h.walletService.CreateWallet(userID)
+	wallet, err := h.walletService.CreateWallet(request.UserID)
 	if err != nil {
-		switch {
-		case errors.Is(err, client.ErrAuthServiceUnavailable):
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
-			return
-
-		case errors.Is(err, client.ErrUserNotFound):
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-
-		case errors.Is(err, client.ErrAuthService):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-
-		case errors.Is(err, gorm.ErrDuplicatedKey):
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User with this userID already has a wallet"})
 			return
-
-		default:
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error occured"})
-			return
 		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error occured"})
+		return
 	}
 
 	c.JSON(http.StatusCreated, wallet)
