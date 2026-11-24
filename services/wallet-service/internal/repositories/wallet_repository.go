@@ -4,6 +4,7 @@ import (
 	"wallet-service/internal/models"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type WalletRepository struct {
@@ -27,4 +28,22 @@ func (r *WalletRepository) FindByUserID(userID string) (*models.Wallet, error) {
 		return nil, err
 	}
 	return &wallet, nil
+}
+
+func (r *WalletRepository) Credit(userID string, amount int64) (int64, error) {
+	var wallet models.Wallet
+
+	result := r.db.Clauses(clause.Returning{}).
+		Model(&wallet).
+		Where("user_id = ?", userID).
+		Update("balance", gorm.Expr("balance + ?", amount))
+
+	if result.Error != nil {
+		return 0, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return 0, gorm.ErrRecordNotFound
+	}
+
+	return wallet.Balance, nil
 }

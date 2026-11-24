@@ -11,5 +11,6 @@ func SetupRouter(router *gin.Engine, walletHandler *handlers.WalletHandler) {
 	{
 		api.POST("/create", walletHandler.CreateWallet)
 		api.GET("/balance", walletHandler.GetWalletBalance)
+		api.PATCH("/credit", walletHandler.CreditWallet)
 	}
 }

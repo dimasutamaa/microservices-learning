@@ -43,3 +43,12 @@ func (s *WalletService) GetWalletBalance(userID string) (*dto.WalletResponse, er
 		Balance: wallet.Balance,
 	}, nil
 }
+
+func (s *WalletService) CreditWallet(userID string, amount int64) (int64, error) {
+	newBalance, err := s.walletRepo.Credit(userID, amount)
+	if err != nil {
+		return 0, err
+	}
+
+	return newBalance, nil
+}

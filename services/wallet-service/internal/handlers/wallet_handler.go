@@ -61,3 +61,31 @@ func (h *WalletHandler) GetWalletBalance(c *gin.Context) {
 
 	c.JSON(http.StatusOK, wallet)
 }
+
+// PATCH /wallet/credit
+func (h *WalletHandler) CreditWallet(c *gin.Context) {
+	var request dto.CreditWalletRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	userID := c.GetHeader("X-User-ID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required header: X-User-ID"})
+		return
+	}
+
+	newBalance, err := h.walletService.CreditWallet(userID, request.Amount)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User wallet not found"})
+			return
+		}
+
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error occured"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"newBalance": newBalance})
+}
