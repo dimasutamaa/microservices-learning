@@ -46,14 +46,12 @@ func main() {
 
 	authSvc := services.NewAuthService(userRepo, tokenRepo, rdb, cfg, walletClient, db)
 	tokenScv := services.NewAccessTokenService(tokenRepo)
-	userSvc := services.NewUserService(userRepo)
 
 	authHandler := handlers.NewAuthHandler(authSvc)
 	tokenHandler := handlers.NewTokenHandler(tokenScv)
-	userHandler := handlers.NewUserHandler(userSvc)
 
 	router := gin.Default()
-	routes.SetupRouter(router, authHandler, tokenHandler, userHandler)
+	routes.SetupRouter(router, authHandler, tokenHandler)
 
 	addr := utils.GetEnv("PORT", "8081")
 	if err := router.Run(":" + addr); err != nil {
