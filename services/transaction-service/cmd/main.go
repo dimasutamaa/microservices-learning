@@ -6,6 +6,7 @@ import (
 	"transaction-service/internal/client"
 	"transaction-service/internal/config"
 	"transaction-service/internal/handlers"
+	"transaction-service/internal/messaging"
 	"transaction-service/internal/models"
 	"transaction-service/internal/repositories"
 	"transaction-service/internal/routes"
@@ -30,12 +31,26 @@ func main() {
 
 	cfg := config.LoadGlobalConfig()
 	trxRepo := repositories.NewTransactionRepository(db)
+
+	rabbitMQ, err := messaging.NewRabbitMQ(cfg.RabbitMQURL, trxRepo)
+	if err != nil {
+		log.Fatalf("[RabbitMQ] %v", err)
+	}
+	defer rabbitMQ.Close()
+
 	walletClient := client.NewWalletClient(cfg.WalletSvcBaseUrl)
-	trxService := services.NewTransactionService(trxRepo, walletClient)
+	trxService := services.NewTransactionService(trxRepo, walletClient, rabbitMQ)
 	trxHandler := handlers.NewTransactionHandler(trxService)
 
 	router := gin.Default()
 	routes.SetupRouter(router, trxHandler)
+
+	// Listen for wallet results in the background
+	go func() {
+		if err := rabbitMQ.ConsumeTransferResults(); err != nil {
+			log.Fatalf("[RabbitMQ] transfer result consumer stopped: %v", err)
+		}
+	}()
 
 	addr := utils.GetEnv("PORT", "8083")
 	if err := router.Run(":" + addr); err != nil {

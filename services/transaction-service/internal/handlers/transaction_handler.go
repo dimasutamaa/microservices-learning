@@ -47,3 +47,33 @@ func (h *TransactionHandler) Topup(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
+// POST /transactions/transfer
+func (h *TransactionHandler) Transfer(c *gin.Context) {
+	fromUserID := c.GetHeader("X-User-ID")
+	if fromUserID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required header: X-User-ID"})
+		return
+	}
+
+	var request dto.TransferRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := h.transactionService.Transfer(c.Request.Context(), fromUserID, request.ToUserID, request.Amount)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrSelfTransfer):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		case errors.Is(err, services.ErrTransferPublish):
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Transfer could not be queued"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected error occured"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusAccepted, result)
+}

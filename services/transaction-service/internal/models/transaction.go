@@ -5,6 +5,7 @@ import "time"
 type Transaction struct {
 	ID          string `gorm:"primaryKey"`
 	UserID      string `gorm:"not null;index"`
+	ToUserID    string `gorm:"index"`
 	MerchantID  string
 	Amount      int64  `gorm:"not null"`
 	Type        string `gorm:"not null"`

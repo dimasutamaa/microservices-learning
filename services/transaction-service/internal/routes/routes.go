@@ -10,5 +10,6 @@ func SetupRouter(router *gin.Engine, transactionHandler *handlers.TransactionHan
 	api := router.Group("/transactions")
 	{
 		api.POST("/topup", transactionHandler.Topup)
+		api.POST("/transfer", transactionHandler.Transfer)
 	}
 }

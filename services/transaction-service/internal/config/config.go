@@ -7,6 +7,7 @@ import (
 
 type GlobalConfig struct {
 	WalletSvcBaseUrl string
+	RabbitMQURL      string
 }
 
 type DBConfig struct {
@@ -21,6 +22,7 @@ type DBConfig struct {
 func LoadGlobalConfig() *GlobalConfig {
 	return &GlobalConfig{
 		WalletSvcBaseUrl: utils.GetEnvOrFatal("WALLET_SERVICE_BASE_URL"),
+		RabbitMQURL:      utils.GetEnvOrFatal("RABBITMQ_URL"),
 	}
 }
 
