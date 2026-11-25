@@ -27,7 +27,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	authService, err := h.authService.Register(&request)
+	result, err := h.authService.Register(&request)
 	if err != nil {
 		switch {
 		case errors.Is(err, client.ErrWalletServiceUnavailable):
@@ -48,7 +48,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusCreated, authService)
+	c.JSON(http.StatusCreated, result)
 }
 
 // POST /login
@@ -76,7 +76,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 // POST /logout
 func (h *AuthHandler) Logout(c *gin.Context) {
 	tokenID := c.GetHeader("X-Token-ID")
+	if tokenID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required header: X-Token-ID"})
+		return
+	}
+
 	userID := c.GetHeader("X-User-ID")
+	if userID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required header: X-User-ID"})
+		return
+	}
 
 	if err := h.authService.Logout(tokenID, userID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
