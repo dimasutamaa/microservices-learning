@@ -5,6 +5,7 @@ import (
 	"log"
 	"wallet-service/internal/config"
 	"wallet-service/internal/handlers"
+	"wallet-service/internal/messaging"
 	"wallet-service/internal/models"
 	"wallet-service/internal/repositories"
 	"wallet-service/internal/routes"
@@ -31,8 +32,21 @@ func main() {
 	walletSvc := services.NewWalletService(walletRepo)
 	walletHandler := handlers.NewWalletHandler(walletSvc)
 
+	rabbitMQ, err := messaging.NewRabbitMQ(utils.GetEnvOrFatal("RABBITMQ_URL"), walletSvc)
+	if err != nil {
+		log.Fatalf("[RabbitMQ] %v", err)
+	}
+	defer rabbitMQ.Close()
+
 	router := gin.Default()
 	routes.SetupRouter(router, walletHandler)
+
+	// Process transfer requests in the background
+	go func() {
+		if err := rabbitMQ.ConsumeTransferCommands(); err != nil {
+			log.Fatalf("[RabbitMQ] transfer command consumer stopped: %v", err)
+		}
+	}()
 
 	addr := utils.GetEnv("PORT", "8082")
 	if err := router.Run(":" + addr); err != nil {
