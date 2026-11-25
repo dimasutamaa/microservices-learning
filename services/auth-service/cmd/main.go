@@ -1,6 +1,7 @@
 package main
 
 import (
+	"auth-service/internal/client"
 	"auth-service/internal/config"
 	"auth-service/internal/handlers"
 	"auth-service/internal/models"
@@ -38,19 +39,19 @@ func main() {
 	}
 	defer rdb.Close()
 
+	walletClient := client.NewWalletClient(cfg.WalletSvcBaseUrl)
+
 	userRepo := repositories.NewUserRepository(db)
 	tokenRepo := repositories.NewAccessTokenRepository(db)
 
-	authSvc := services.NewAuthService(userRepo, tokenRepo, rdb, cfg)
+	authSvc := services.NewAuthService(userRepo, tokenRepo, rdb, cfg, walletClient, db)
 	tokenScv := services.NewAccessTokenService(tokenRepo)
-	userSvc := services.NewUserService(userRepo)
 
 	authHandler := handlers.NewAuthHandler(authSvc)
 	tokenHandler := handlers.NewTokenHandler(tokenScv)
-	userHandler := handlers.NewUserHandler(userSvc)
 
 	router := gin.Default()
-	routes.SetupRouter(router, authHandler, tokenHandler, userHandler)
+	routes.SetupRouter(router, authHandler, tokenHandler)
 
 	addr := utils.GetEnv("PORT", "8081")
 	if err := router.Run(":" + addr); err != nil {

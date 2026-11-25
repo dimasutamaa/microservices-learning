@@ -7,8 +7,9 @@ import (
 )
 
 type GlobalConfig struct {
-	TokenTTL  time.Duration
-	JWTSecret []byte
+	TokenTTL         time.Duration
+	JWTSecret        []byte
+	WalletSvcBaseUrl string
 }
 
 type DBConfig struct {
@@ -28,8 +29,9 @@ type RedisConfig struct {
 
 func LoadGlobalConfig() *GlobalConfig {
 	return &GlobalConfig{
-		JWTSecret: []byte(utils.GetEnvOrFatal("JWT_SECRET")),
-		TokenTTL:  15 * time.Minute,
+		JWTSecret:        []byte(utils.GetEnvOrFatal("JWT_SECRET")),
+		TokenTTL:         15 * time.Minute,
+		WalletSvcBaseUrl: utils.GetEnvOrFatal("WALLET_SERVICE_BASE_URL"),
 	}
 }
 

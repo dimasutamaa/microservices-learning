@@ -1,6 +1,7 @@
 package services
 
 import (
+	"auth-service/internal/client"
 	"auth-service/internal/config"
 	"auth-service/internal/dto"
 	"auth-service/internal/models"
@@ -17,19 +18,23 @@ import (
 )
 
 type AuthService struct {
-	userRepo  *repositories.UserRepository
-	tokenRepo *repositories.AccessTokenRepository
-	rdb       *redis.Client
-	cfg       *config.GlobalConfig
+	userRepo     *repositories.UserRepository
+	tokenRepo    *repositories.AccessTokenRepository
+	rdb          *redis.Client
+	cfg          *config.GlobalConfig
+	walletClient *client.WalletClient
+	db           *gorm.DB
 }
 
 func NewAuthService(userRepo *repositories.UserRepository, tokenRepo *repositories.AccessTokenRepository,
-	rdb *redis.Client, cfg *config.GlobalConfig) *AuthService {
+	rdb *redis.Client, cfg *config.GlobalConfig, walletClient *client.WalletClient, db *gorm.DB) *AuthService {
 	return &AuthService{
-		userRepo:  userRepo,
-		tokenRepo: tokenRepo,
-		rdb:       rdb,
-		cfg:       cfg,
+		userRepo:     userRepo,
+		tokenRepo:    tokenRepo,
+		rdb:          rdb,
+		cfg:          cfg,
+		walletClient: walletClient,
+		db:           db,
 	}
 }
 
@@ -46,7 +51,19 @@ func (s *AuthService) Register(request *dto.CreateUserRequest) (*dto.UserRespons
 		Password: string(hashed),
 	}
 
-	if _, err := s.userRepo.Create(user); err != nil {
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		if err := s.userRepo.CreateWithTx(user, tx); err != nil {
+			return err
+		}
+
+		if err := s.walletClient.CreateWallet(user.ID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return nil, err
 	}
 
